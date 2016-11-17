@@ -18,3 +18,22 @@
 
 #include "setter_increment.h"
 
+int set(uint32_t name,uint32_t value) {
+    //check if an existing open connection not exist
+        //check if an existing token file is present. If present load it
+            //load it
+        //sent Syn packet
+        //wait success
+    //send setpacket
+    //wait success
+}
+
+int increment(uint32_t name,uint32_t value) {
+    //check if an existing open not connection exist
+        //check if an existing token file is present
+            //load it
+        //sent Syn packet
+        //wait success
+    //send setpacket
+    //wait success
+}
