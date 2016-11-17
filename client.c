@@ -29,9 +29,26 @@
 
 #define PORT 1088
 
+int getMACaddress(uint8_t * MACaddress) {
+    int status = 1;
+    char buf[256];
+    FILE *fp = fopen("/sys/class/net/eth0/address", "rt");
+    memset(buf, 0, 256);
+    if (fp) {
+        if (fgets(buf, sizeof buf, fp) > 0) {
+            sscanf(buf, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &MACaddress[0],
+                   &MACaddress[1], &MACaddress[2], &MACaddress[3], &MACaddress[4], &MACaddress[5]);
+            status = 0;
+        }
+        fclose(fp);
+    }
+    return status;
+}
+
 int main(int argc, char **argv)
 {
     int	clientSocket, numberOfCharacterRead;
+    uint8_t MACaddress;
     struct sockaddr_in serverAddress;
     uint64_t* buffer = malloc(sizeof(uint64_t));
 
@@ -53,9 +70,14 @@ int main(int argc, char **argv)
         exit(-3);
     }
 
+    if (getMACaddress(MACaddress)) {
+        printf("An error occurred while retrieving the MAC address");
+        exit(-4);
+    }
+
     if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0){
         printf("connect error\n");
-        exit(-4);
+        exit(-5);
     }
 
     //TODO send syn packet with MAC address
