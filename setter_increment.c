@@ -29,7 +29,7 @@
 
 int clientSocket;
 struct sockaddr_in serverAddress;
-
+int token;
 
 int socketConnected(int *socket) {
     int error_code = 0;
@@ -38,40 +38,39 @@ int socketConnected(int *socket) {
     return (error_code | returnValue);
 }
 
-int set(uint32_t name, uint32_t value) {
+int establishSession(int* socket) {
+    int result=1;
     //check if an existing open connection not exist
     if (socketConnected(&clientSocket)!=0) {
         if ((clientSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            printf("socket error\n");
-            exit(-2);
+            result=-2;
         } else {
             memset(&serverAddress, 0, sizeof(serverAddress));
             serverAddress.sin_family = AF_INET;
             serverAddress.sin_port = htons(PORT);
             if (inet_pton(AF_INET, ADDRESS, &serverAddress.sin_addr) <= 0) {
-                printf("inet_pton error for %s\n", ADDRESS);
-                exit(-3);
+                result=-3;
             } else if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
-                printf("connect error\n");
-                exit(-5);
+                result=-5;
             }
         }
-        //check if an existing token file is present. If present load it
-        //create connection
-        //sent Syn packet
-        //wait success
+        if (result==1) {
+            //check if an existing token file is present. If present load it
+            //create connection
+            //sent Syn packet
+            //wait success
+        }
     }
+}
+
+int set(uint32_t name, uint32_t value) {
+establishSession(socketConnected());
 //send setpacket
 //wait success
 }
 
 int increment(uint32_t name, uint32_t value) {
-    //check if an existing open not connection exist
-    //check if an existing token file is present
-    //load it
-    //create connection
-    //sent Syn packet
-    //wait success
+    establishSession(socketConnected());
     //send setpacket
     //wait success
 }
