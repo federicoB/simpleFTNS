@@ -23,26 +23,45 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 
 #define PORT 1088
 #define ADDRESS "127.0.0.1"
 
-int clientSocket;
+int client_Socket; //this is global for a reason
 struct sockaddr_in serverAddress;
 int token;
 
-int socketConnected(int *socket) {
+int socketConnected(int* clientSocket) {
     int error_code = 0;
     int error_code_size = sizeof(error_code);
-    int returnValue = getsockopt(*socket, SOL_SOCKET, SO_ERROR, &error_code, &error_code_size);
+    int returnValue = getsockopt(*clientSocket, SOL_SOCKET, SO_ERROR, &error_code, &error_code_size);
     return (error_code | returnValue);
 }
 
-int establishSession(int* socket) {
+int initializeToken(int *token) {
+    token = 0;
+    int result=1;
+    DIR* dir = opendir(".");
+    //define a struct for containing current file
+    struct dirent *directoryStruct;
+    //while we haven't finish to read the files into the directory we count the number of files
+    while ((directoryStruct = readdir(dir)) != NULL) {
+            #define filename directoryStruct->d_name
+            //it's ok to check only the first character
+            if (filename!='.') {
+                FILE* filetoken = fopen(filename,'r');
+                fread(&token,sizeof(token),1,filetoken);
+                fclose(filetoken);
+            }
+    }
+}
+
+int establishSession(int* clientSocket) {
     int result=1;
     //check if an existing open connection not exist
-    if (socketConnected(&clientSocket)!=0) {
-        if ((clientSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if (socketConnected(clientSocket)!=0) {
+        if ((*clientSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             result=-2;
         } else {
             memset(&serverAddress, 0, sizeof(serverAddress));
@@ -50,12 +69,13 @@ int establishSession(int* socket) {
             serverAddress.sin_port = htons(PORT);
             if (inet_pton(AF_INET, ADDRESS, &serverAddress.sin_addr) <= 0) {
                 result=-3;
-            } else if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
+            } else if (connect(*clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
                 result=-5;
             }
         }
         if (result==1) {
             //check if an existing token file is present. If present load it
+            initializeToken(&token);
             //create connection
             //sent Syn packet
             //wait success
@@ -64,13 +84,13 @@ int establishSession(int* socket) {
 }
 
 int set(uint32_t name, uint32_t value) {
-establishSession(socketConnected());
+establishSession(&client_Socket);
 //send setpacket
 //wait success
 }
 
 int increment(uint32_t name, uint32_t value) {
-    establishSession(socketConnected());
+    establishSession(&client_Socket);
     //send setpacket
     //wait success
 }
