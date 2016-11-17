@@ -19,6 +19,8 @@
 #ifndef SETTER_INCREMENT_H
 #define SETTER_INCREMENT_H
 
+int set(uint32_t name,uint32_t value);
 
+int increment(uint32_t name,uint32_t value);
 
 #endif
