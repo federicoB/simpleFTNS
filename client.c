@@ -16,21 +16,9 @@
 *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include "setter_increment.h"
 
-#define PORT 1088
 
-int getMACaddress(uint8_t * MACaddress) {
+/*int getMACaddress(uint8_t * MACaddress) {
     int status = 1;
     char buf[256];
     FILE *fp = fopen("/sys/class/net/eth0/address", "rt");
@@ -44,11 +32,13 @@ int getMACaddress(uint8_t * MACaddress) {
         fclose(fp);
     }
     return status;
-}
+}*/
 
 int main(int argc, char **argv)
 {
-    int	clientSocket, numberOfCharacterRead;
+/*    set(12,12);
+    set(15,15);*/
+    /*int	clientSocket, numberOfCharacterRead;
     uint8_t MACaddress;
     struct sockaddr_in serverAddress;
     uint64_t* buffer = malloc(sizeof(uint64_t));
@@ -58,34 +48,21 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    if ( (clientSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-        printf("socket error\n");
-        exit(-2);
-    }
 
-    memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port   = htons(PORT);
-    if (inet_pton(AF_INET, argv[1], &serverAddress.sin_addr) <= 0){
-        printf("inet_pton error for %s\n", argv[1]);
-        exit(-3);
-    }
+
+
 
     if (getMACaddress(MACaddress)) {
         printf("An error occurred while retrieving the MAC address");
         exit(-4);
     }
 
-    if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0){
-        printf("connect error\n");
-        exit(-5);
-    }
 
     //TODO send syn packet with MAC address
 
     while ( (numberOfCharacterRead = read(clientSocket, buffer,(ssize_t) sizeof(uint64_t))) > 0) {
         //TODO check response
-    }
+    }*/
 
     return 0;
 }

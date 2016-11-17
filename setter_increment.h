@@ -19,6 +19,8 @@
 #ifndef SETTER_INCREMENT_H
 #define SETTER_INCREMENT_H
 
+#include <stdint.h>
+
 /**
  * Set a variable with the value given.
  * TODO add truncating description.
