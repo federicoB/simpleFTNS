@@ -19,8 +19,21 @@
 #ifndef SETTER_INCREMENT_H
 #define SETTER_INCREMENT_H
 
+/**
+ * Set a variable with the value given.
+ * TODO add truncating description.
+ * @param name uint32_t: the name of the variable to set
+ * @param value uint32_t the value to set.
+ * @return -1 if an error occurred 0 otherwise.
+ */
 int set(uint32_t name,uint32_t value);
 
+/**
+ * Increment of a given value the specified variable identified by name.
+ * @param name uint32_t: the name of the variable to increase
+ * @param value uint32_t: the increase amount
+ * @return -1 if an error occurred 0 otherwise.
+ */
 int increment(uint32_t name,uint32_t value);
 
 #endif
