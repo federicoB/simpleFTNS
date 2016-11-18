@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #define PORT 1088
 #define ADDRESS "127.0.0.1"
@@ -42,7 +43,9 @@ int socketConnected(int* clientSocket) {
 int initializeToken(int *token) {
     token = 0;
     int result=1;
-    DIR* dir = opendir(".");
+    char buffer[PATH_MAX];
+    getcwd(buffer,PATH_MAX);
+    DIR* dir = opendir(buffer);
     //define a struct for containing current file
     struct dirent *directoryStruct;
     //while we haven't finish to read the files into the directory we count the number of files
