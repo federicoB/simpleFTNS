@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define PORT 1088
 #define ADDRESS "127.0.0.1"
@@ -59,21 +60,37 @@ int socketConnected(int *clientSocket) {
 int initializeToken(int *token) {
     token = 0;
     int result = 1;
-    char buffer[PATH_MAX];
-    getcwd(buffer, PATH_MAX);
-    DIR *dir = opendir(buffer);
-    //define a struct for containing current file
-    struct dirent *directoryStruct;
-    //while we haven't finish to read the files into the directory we count the number of files
-    while ((directoryStruct = readdir(dir)) != NULL) {
-        #define filename directoryStruct->d_name
-        //it's ok to check only the first character
-        if (filename != '.') {
-            FILE *filetoken = fopen(filename, 'r');
-            fread(&token, sizeof(token), 1, filetoken);
-            fclose(filetoken);
-        }
-    }
+    char* currentWorkingDirectoryPath;
+    DIR *currentWorkingDirectory;
+    FILE* filetoken;
+    //get current working directory, getcwd automatically malloc
+    currentWorkingDirectoryPath = getcwd(NULL, PATH_MAX);
+    if (currentWorkingDirectoryPath!=NULL) {
+        currentWorkingDirectory = opendir(currentWorkingDirectoryPath);
+        if (currentWorkingDirectory!=NULL) {
+            //clean up currentWorkingDirectoryPath from memory
+            free(currentWorkingDirectoryPath);
+            //define a struct for containing current file
+            struct dirent *directoryStruct;
+            //while we haven't finish to read the files into the directory we count the number of files
+            while ((directoryStruct = readdir(currentWorkingDirectory)) != NULL) {
+                #define filename directoryStruct->d_name
+                //it's ok to check only the first character
+                if (*filename != '.') {
+                    filetoken = fopen(filename, "r");
+                    if (filetoken!=NULL) {
+                        //read the token from file
+                        if (fread(&token, sizeof(token), 1, filetoken)==0) {
+                            //if an error occur (fread return value == 0)
+                            result = errno;
+                        }
+                        fclose(filetoken);
+                    }
+                }
+            }
+        } else result=errno;
+    } else result = errno;
+    return result;
 }
 
 int establishSession(int *clientSocket) {
