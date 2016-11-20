@@ -33,8 +33,7 @@
 
 int client_Socket; //this is global for a reason
 struct sockaddr_in serverAddress;
-//TODO change token to standard 32 bit integer
-int token;
+uint32_t token;
 
 /*int getMACaddress(uint8_t * MACaddress) {
     int status = 1;
@@ -59,7 +58,7 @@ int socketConnected(int *clientSocket) {
     return (error_code | returnValue);
 }
 
-int initializeToken(int *token) {
+int initializeToken(uint32_t *token) {
     token = 0;
     int result = 1;
     char* currentWorkingDirectoryPath;
@@ -95,7 +94,7 @@ int initializeToken(int *token) {
     return result;
 }
 
-int saveTokenToFile(int token) {
+int saveTokenToFile(uint32_t token) {
     int result = 1;
     FILE* filetoken;
         if ((filetoken=fopen("token","w"))!=NULL) {
