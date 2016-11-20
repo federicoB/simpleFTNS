@@ -33,6 +33,7 @@
 
 int client_Socket; //this is global for a reason
 struct sockaddr_in serverAddress;
+//TODO change token to standard 32 bit integer
 int token;
 
 /*int getMACaddress(uint8_t * MACaddress) {
@@ -106,6 +107,20 @@ int saveTokenToFile(int token) {
     return result;
 }
 
+int sendPacket(SimpleProtocolPacket* packet) {
+    send(client_Socket,packet,sizeof(SimpleProtocolPacket),0);
+}
+
+int waitSuccess() {
+    SimpleProtocolPacket  simpleProtocolPacket;
+    int result=1;
+    recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
+    if (GETSUC(simpleProtocolPacket)!=1) {
+        result = -8;
+    }
+    return result;
+}
+
 int establishSession(int *clientSocket) {
     int result = 1;
     //check if an existing open connection not exist
@@ -126,33 +141,36 @@ int establishSession(int *clientSocket) {
             //check if an existing token file is present. If present load it
             initializeToken(&token);
             //sent Syn packet
-            //wait success
+            SimpleProtocolPacket simpleProtocolPacket;
+            SPPINIT(simpleProtocolPacket);
+            SETSYN(simpleProtocolPacket);
+            SETTKN(simpleProtocolPacket,token);
+            sendPacket(&simpleProtocolPacket);
+            waitSuccess();
         }
     }
 }
 
-int sendPacket(SimpleProtocolPacket* packet) {
-    send(client_Socket,packet,sizeof(SimpleProtocolPacket),0);
-}
-
-int waitSuccess() {
-    SimpleProtocolPacket  simpleProtocolPacket;
-    int result=1;
-    recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
-    if (GETSUC(simpleProtocolPacket)!=1) {
-        result = -8;
-    }
-    return result;
-}
-
 int set(uint32_t name, uint32_t value) {
     establishSession(&client_Socket);
-//send setpacket
-//wait success
+    //send set packet
+    SimpleProtocolPacket simpleProtocolPacket;
+    SPPINIT(simpleProtocolPacket);
+    SETSET(simpleProtocolPacket);
+    SETVAR(simpleProtocolPacket,name);
+    SETVAL(simpleProtocolPacket,value);
+    sendPacket(&simpleProtocolPacket);
+    waitSuccess();
 }
 
 int increment(uint32_t name, uint32_t value) {
     establishSession(&client_Socket);
-    //send setpacket
-    //wait success
+    //send increment packet
+    SimpleProtocolPacket simpleProtocolPacket;
+    SPPINIT(simpleProtocolPacket);
+    SETINC(simpleProtocolPacket);
+    SETVAR(simpleProtocolPacket,name);
+    SETVAL(simpleProtocolPacket,value);
+    sendPacket(&simpleProtocolPacket);
+    waitSuccess();
 }
