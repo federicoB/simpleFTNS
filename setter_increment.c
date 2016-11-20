@@ -176,3 +176,20 @@ int increment(uint32_t name, uint32_t value) {
     sendPacket(&simpleProtocolPacket);
     waitSuccess();
 }
+
+int get(uint32_t name,uint32_t* value) {
+    int result = 1;
+    establishSession(&client_Socket);
+    SimpleProtocolPacket simpleProtocolPacket;
+    SPPINIT(simpleProtocolPacket);
+    SETGET(simpleProtocolPacket);
+    SETVAR(simpleProtocolPacket,name);
+    sendPacket(&simpleProtocolPacket);
+    //reuse packet for response
+    recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
+    simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
+    if (GETSUC(simpleProtocolPacket)!=1) {
+        result = -8;
+    } else *value = (uint32_t) GETVAL(simpleProtocolPacket);
+    return result;
+}
