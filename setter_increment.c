@@ -26,8 +26,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
-#include <bits/fcntl-linux.h>
-#include <fcntl.h>
+#include "simpleProtocol.h"
 
 #define PORT 1088
 #define ADDRESS "127.0.0.1"
@@ -54,7 +53,7 @@ int token;
 
 int socketConnected(int *clientSocket) {
     int error_code = 0;
-    int error_code_size = sizeof(error_code);
+    socklen_t error_code_size = sizeof(error_code);
     int returnValue = getsockopt(*clientSocket, SOL_SOCKET, SO_ERROR, &error_code, &error_code_size);
     return (error_code | returnValue);
 }
@@ -130,6 +129,10 @@ int establishSession(int *clientSocket) {
             //wait success
         }
     }
+}
+
+int sendPacket(SimpleProtocolPacket* packet) {
+    send(client_Socket,packet,sizeof(SimpleProtocolPacket),0);
 }
 
 int set(uint32_t name, uint32_t value) {
