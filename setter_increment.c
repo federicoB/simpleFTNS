@@ -108,6 +108,7 @@ int saveTokenToFile(int token) {
 }
 
 int sendPacket(SimpleProtocolPacket* packet) {
+    *packet = SPPTONTW(*packet);
     send(client_Socket,packet,sizeof(SimpleProtocolPacket),0);
 }
 
@@ -115,6 +116,7 @@ int waitSuccess() {
     SimpleProtocolPacket  simpleProtocolPacket;
     int result=1;
     recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
+    simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
     if (GETSUC(simpleProtocolPacket)!=1) {
         result = -8;
     }
