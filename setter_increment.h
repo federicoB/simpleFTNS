@@ -26,7 +26,7 @@
  * TODO add truncating description.
  * @param name uint32_t: the name of the variable to set
  * @param value uint32_t the value to set.
- * @return -1 if an error occurred 0 otherwise.
+ * @return a value <0 if an error occurred 1 otherwise.
  */
 int set(uint32_t name,uint32_t value);
 
@@ -34,8 +34,16 @@ int set(uint32_t name,uint32_t value);
  * Increment of a given value the specified variable identified by name.
  * @param name uint32_t: the name of the variable to increase
  * @param value uint32_t: the increase amount
- * @return -1 if an error occurred 0 otherwise.
+ * @return a value <0 if an error occurred 1 otherwise.
  */
 int increment(uint32_t name,uint32_t value);
+
+/**
+ * Get the value of the variable named "name"
+ * @param name uint32_t: the name of the variable
+ * @param value uint32_t*: the obtained value
+ * @return a value <0 if an error occurred 1 otherwise.
+ */
+int get(uint32_t name,uint32_t* value);
 
 #endif
