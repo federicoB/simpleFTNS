@@ -61,27 +61,18 @@ int socketConnected(int *clientSocket) {
 int initializeToken(uint32_t *token) {
     token = 0;
     int result = 1;
-    char* currentWorkingDirectoryPath;
-    DIR *currentWorkingDirectory;
     FILE* filetoken;
-    //get current working directory, getcwd automatically malloc
-    currentWorkingDirectoryPath = getcwd(NULL, PATH_MAX);
-    if (currentWorkingDirectoryPath!=NULL) {
-        currentWorkingDirectory = opendir(currentWorkingDirectoryPath);
-        if (currentWorkingDirectory!=NULL) {
-            //clean up currentWorkingDirectoryPath from memory
-            free(currentWorkingDirectoryPath);
             //define a struct for containing current file
             struct dirent *directoryStruct;
             //while we haven't finish to read the files into the directory we count the number of files
-            while ((directoryStruct = readdir(currentWorkingDirectory)) != NULL) {
+            while ((directoryStruct = readdir(".")) != NULL) {
                 #define filename directoryStruct->d_name
                 //it's ok to check only the first character
                 if (*filename != '.') {
                     filetoken = fopen(filename, "r");
-                    if (filetoken!=NULL) {
+                    if (filetoken != NULL) {
                         //read the token from file
-                        if (fread(&token, sizeof(token), 1, filetoken)==0) {
+                        if (fread(&token, sizeof(token), 1, filetoken) == 0) {
                             //if an error occur (fread return value == 0)
                             result = errno;
                         }
@@ -89,8 +80,6 @@ int initializeToken(uint32_t *token) {
                     }
                 }
             }
-        } else result=errno;
-    } else result = errno;
     return result;
 }
 
@@ -153,19 +142,20 @@ int establishSession(int *clientSocket) {
 }
 
 int set(uint32_t name, uint32_t value) {
-    establishSession(&client_Socket);
-    //send set packet
-    SimpleProtocolPacket simpleProtocolPacket;
-    SPPINIT(simpleProtocolPacket);
-    SETSET(simpleProtocolPacket);
-    SETVAR(simpleProtocolPacket,name);
-    SETVAL(simpleProtocolPacket,value);
-    sendPacket(&simpleProtocolPacket);
-    waitSuccess();
+    if (establishSession(&client_Socket)){
+        //send set packet
+        SimpleProtocolPacket simpleProtocolPacket;
+        SPPINIT(simpleProtocolPacket);
+        SETSET(simpleProtocolPacket);
+        SETVAR(simpleProtocolPacket,name);
+        SETVAL(simpleProtocolPacket,value);
+        sendPacket(&simpleProtocolPacket);
+        waitSuccess();
+    };
 }
 
 int increment(uint32_t name, uint32_t value) {
-    establishSession(&client_Socket);
+    if (establishSession(&client_Socket)){
     //send increment packet
     SimpleProtocolPacket simpleProtocolPacket;
     SPPINIT(simpleProtocolPacket);
@@ -174,11 +164,12 @@ int increment(uint32_t name, uint32_t value) {
     SETVAL(simpleProtocolPacket,value);
     sendPacket(&simpleProtocolPacket);
     waitSuccess();
+    };
 }
 
 int get(uint32_t name,uint32_t* value) {
     int result = 1;
-    establishSession(&client_Socket);
+    if (establishSession(&client_Socket)){
     SimpleProtocolPacket simpleProtocolPacket;
     SPPINIT(simpleProtocolPacket);
     SETGET(simpleProtocolPacket);
@@ -190,5 +181,6 @@ int get(uint32_t name,uint32_t* value) {
     if (GETSUC(simpleProtocolPacket)!=1) {
         result = -8;
     } else *value = (uint32_t) GETVAL(simpleProtocolPacket);
+    };
     return result;
 }
