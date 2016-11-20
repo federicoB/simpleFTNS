@@ -135,6 +135,16 @@ int sendPacket(SimpleProtocolPacket* packet) {
     send(client_Socket,packet,sizeof(SimpleProtocolPacket),0);
 }
 
+int waitSuccess() {
+    SimpleProtocolPacket  simpleProtocolPacket;
+    int result=1;
+    recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
+    if (GETSUC(simpleProtocolPacket)!=1) {
+        result = -8;
+    }
+    return result;
+}
+
 int set(uint32_t name, uint32_t value) {
     establishSession(&client_Socket);
 //send setpacket

@@ -16,6 +16,8 @@
 *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "setter_increment.h"
+
 int main(int argc, char **argv)
 {
     set(12,12);
