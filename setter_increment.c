@@ -26,6 +26,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
+#include <bits/fcntl-linux.h>
+#include <fcntl.h>
 
 #define PORT 1088
 #define ADDRESS "127.0.0.1"
@@ -90,6 +92,18 @@ int initializeToken(int *token) {
             }
         } else result=errno;
     } else result = errno;
+    return result;
+}
+
+int saveTokenToFile(int token) {
+    int result = 1;
+    FILE* filetoken;
+        if ((filetoken=fopen("token","w"))!=NULL) {
+            if (fwrite(&token,sizeof(token),1,filetoken)==0) {
+                    //if an error occur (fread return value == 0)
+                    result = errno;
+                }
+            } else result = errno;
     return result;
 }
 
