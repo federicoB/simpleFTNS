@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
-#include <unistd.h>
 #include <errno.h>
 #include "simpleProtocol.h"
 
@@ -65,10 +64,10 @@ int initializeToken(uint32_t *token) {
             //define a struct for containing current file
             struct dirent *directoryStruct;
             //while we haven't finish to read the files into the directory we count the number of files
-            while ((directoryStruct = readdir(".")) != NULL) {
+            while ((directoryStruct = readdir(opendir("."))) != NULL) {
                 #define filename directoryStruct->d_name
                 //it's ok to check only the first character
-                if (*filename != '.') {
+                if (strcmp(filename,"token")) {
                     filetoken = fopen(filename, "r");
                     if (filetoken != NULL) {
                         //read the token from file
@@ -96,8 +95,12 @@ int saveTokenToFile(uint32_t token) {
 }
 
 int sendPacket(SimpleProtocolPacket* packet) {
+    int result=1;
     *packet = SPPTONTW(*packet);
-    send(client_Socket,packet,sizeof(SimpleProtocolPacket),0);
+    if (send(client_Socket,packet,sizeof(SimpleProtocolPacket),0)==-1) {
+        result = errno;
+    }
+    return result;
 }
 
 int waitSuccess() {
@@ -130,14 +133,17 @@ int establishSession(int *clientSocket) {
         }
         if (result == 1) {
             //check if an existing token file is present. If present load it
-            initializeToken(&token);
-            //sent Syn packet
-            SimpleProtocolPacket simpleProtocolPacket;
-            SPPINIT(simpleProtocolPacket);
-            SETSYN(simpleProtocolPacket);
-            SETTKN(simpleProtocolPacket,token);
-            sendPacket(&simpleProtocolPacket);
-            waitSuccess();
+            if ((result=initializeToken(&token))) {
+                //sent Syn packet
+                SimpleProtocolPacket simpleProtocolPacket;
+                SPPINIT(simpleProtocolPacket);
+                SETSYN(simpleProtocolPacket);
+                SETTKN(simpleProtocolPacket, token);
+                if ((result=sendPacket(&simpleProtocolPacket))) {
+                    result = waitSuccess();
+                }
+                //TODO if token was zero save it to file
+            }
         }
     }
     return result;
