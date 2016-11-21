@@ -103,11 +103,12 @@ int sendPacket(SimpleProtocolPacket* packet) {
 int waitSuccess() {
     SimpleProtocolPacket  simpleProtocolPacket;
     int result=1;
-    recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
-    simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
-    if (GETSUC(simpleProtocolPacket)!=1) {
-        result = -8;
-    }
+    if (recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0)!=-1) {
+        simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
+        if (GETSUC(simpleProtocolPacket) != 1) {
+            result = -8;
+        }
+    } else result = errno;
     return result;
 }
 
@@ -139,48 +140,55 @@ int establishSession(int *clientSocket) {
             waitSuccess();
         }
     }
+    return result;
 }
 
 int set(uint32_t name, uint32_t value) {
-    if (establishSession(&client_Socket)){
+    int result = 1;
+    if ((result=establishSession(&client_Socket))){
         //send set packet
         SimpleProtocolPacket simpleProtocolPacket;
         SPPINIT(simpleProtocolPacket);
         SETSET(simpleProtocolPacket);
         SETVAR(simpleProtocolPacket,name);
         SETVAL(simpleProtocolPacket,value);
-        sendPacket(&simpleProtocolPacket);
-        waitSuccess();
+        if ((result=sendPacket(&simpleProtocolPacket)))
+            result=waitSuccess();
     };
+    return result;
 }
 
 int increment(uint32_t name, uint32_t value) {
-    if (establishSession(&client_Socket)){
-    //send increment packet
-    SimpleProtocolPacket simpleProtocolPacket;
-    SPPINIT(simpleProtocolPacket);
-    SETINC(simpleProtocolPacket);
-    SETVAR(simpleProtocolPacket,name);
-    SETVAL(simpleProtocolPacket,value);
-    sendPacket(&simpleProtocolPacket);
-    waitSuccess();
+    int result=1;
+    if ((result=establishSession(&client_Socket))){
+        //send increment packet
+        SimpleProtocolPacket simpleProtocolPacket;
+        SPPINIT(simpleProtocolPacket);
+        SETINC(simpleProtocolPacket);
+        SETVAR(simpleProtocolPacket,name);
+        SETVAL(simpleProtocolPacket,value);
+        if ((result=sendPacket(&simpleProtocolPacket)))
+            result=waitSuccess();
     };
+    return result;
 }
 
 int get(uint32_t name,uint32_t* value) {
     int result = 1;
-    if (establishSession(&client_Socket)){
-    SimpleProtocolPacket simpleProtocolPacket;
-    SPPINIT(simpleProtocolPacket);
-    SETGET(simpleProtocolPacket);
-    SETVAR(simpleProtocolPacket,name);
-    sendPacket(&simpleProtocolPacket);
-    //reuse packet for response
-    recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0);
-    simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
-    if (GETSUC(simpleProtocolPacket)!=1) {
-        result = -8;
-    } else *value = (uint32_t) GETVAL(simpleProtocolPacket);
+    if ((result=establishSession(&client_Socket))){
+        SimpleProtocolPacket simpleProtocolPacket;
+        SPPINIT(simpleProtocolPacket);
+        SETGET(simpleProtocolPacket);
+        SETVAR(simpleProtocolPacket,name);
+        if ((result=sendPacket(&simpleProtocolPacket))) {
+            //reuse packet for response
+            if (recv(client_Socket, &simpleProtocolPacket, sizeof(SimpleProtocolPacket), 0)!=-1) {
+                simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
+                if (GETSUC(simpleProtocolPacket) != 1) {
+                    result = -8;
+                } else *value = (uint32_t) GETVAL(simpleProtocolPacket);
+            } else result = errno;
+        }
     };
     return result;
 }
