@@ -1,6 +1,6 @@
 /*
 * Created by Federico Bertani on 17/11/16.
-* Copyright (c) 2016 Federico Bertani 
+* Copyright (c) 2016 Federico Bertani, Riccardo Maffei
 * This file is part of FaultTolerantClientServer.
 * FaultTolerantClientServer is free software: you can redistribute it and/or modify
 *    it under the terms of the GNU Affero General Public License as published by
