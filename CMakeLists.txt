@@ -22,3 +22,7 @@ add_library(setter_increment setter_increment.c)
 
 add_executable(client client.c)
 target_link_libraries(client setter_increment)
+
+add_executable(server server.c)
+target_link_libraries(server sqlite3)
+target_link_libraries(server pthread)

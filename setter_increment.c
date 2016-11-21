@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <errno.h>
+#include <unistd.h>
 #include "simpleProtocol.h"
 
 #define PORT 1088
@@ -60,14 +61,24 @@ int socketConnected(int *clientSocket) {
 int initializeToken(uint32_t *token) {
     token = 0;
     int result = 1;
+    char* currentWorkingDirectoryPath;
+    DIR *currentWorkingDirectory;
     FILE* filetoken;
+    //get current working directory, getcwd automatically malloc
+    currentWorkingDirectoryPath = getcwd(NULL, PATH_MAX);
+    if (currentWorkingDirectoryPath!=NULL) {
+        currentWorkingDirectory = opendir(currentWorkingDirectoryPath);
+        if (currentWorkingDirectory != NULL) {
+            //clean up currentWorkingDirectoryPath from memory
+            free(currentWorkingDirectoryPath);
             //define a struct for containing current file
             struct dirent *directoryStruct;
             //while we haven't finish to read the files into the directory we count the number of files
-            while ((directoryStruct = readdir(opendir("."))) != NULL) {
+            while ((directoryStruct = readdir(currentWorkingDirectory)) != NULL) {
                 #define filename directoryStruct->d_name
+                printf("%s\n", filename);
                 //it's ok to check only the first character
-                if (strcmp(filename,"token")) {
+                if (strcmp(filename, "token") == 0) {
                     filetoken = fopen(filename, "r");
                     if (filetoken != NULL) {
                         //read the token from file
@@ -79,6 +90,8 @@ int initializeToken(uint32_t *token) {
                     }
                 }
             }
+        }
+    }
     return result;
 }
 
@@ -151,6 +164,7 @@ int establishSession(int *clientSocket) {
 
 int set(uint32_t name, uint32_t value) {
     int result = 1;
+    //TODO check error checking
     if ((result=establishSession(&client_Socket))){
         //send set packet
         SimpleProtocolPacket simpleProtocolPacket;
