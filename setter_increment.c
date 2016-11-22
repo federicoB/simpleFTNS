@@ -52,11 +52,20 @@ uint32_t token;
     return status;
 }*/
 
+/**
+ * Check if a given socket is already connected to a server or not.
+ * @param clientSocket int*: the socket descriptor to check
+ * @return 1 if already connected 0 if not
+ */
 int socketConnected(int *clientSocket) {
+    //declare a variable for keeping getSockOpt error
     int error_code = 0;
+    //get the size of error code variable
     socklen_t error_code_size = sizeof(error_code);
+    //getting socket option of a not connected socket return -1
     int returnValue = getsockopt(*clientSocket, SOL_SOCKET, SO_ERROR, &error_code, &error_code_size);
-    return (error_code | returnValue);
+    //1 if already connected 0 if not (!-1 is 0)
+    return !returnValue;
 }
 
 int initializeToken(uint32_t *token) {
