@@ -30,6 +30,7 @@
 
 #define PORT 1088
 #define ADDRESS "127.0.0.1"
+#define TOKEN_FILE_NAME "token"
 
 int client_Socket; //this is global for a reason
 struct sockaddr_in serverAddress;
@@ -61,35 +62,16 @@ int socketConnected(int *clientSocket) {
 int initializeToken(uint32_t *token) {
     token = 0;
     int result = 1;
-    char* currentWorkingDirectoryPath;
-    DIR *currentWorkingDirectory;
-    FILE* filetoken;
-    //get current working directory, getcwd automatically malloc
-    currentWorkingDirectoryPath = getcwd(NULL, PATH_MAX);
-    if (currentWorkingDirectoryPath!=NULL) {
-        currentWorkingDirectory = opendir(currentWorkingDirectoryPath);
-        if (currentWorkingDirectory != NULL) {
-            //clean up currentWorkingDirectoryPath from memory
-            free(currentWorkingDirectoryPath);
-            //define a struct for containing current file
-            struct dirent *directoryStruct;
-            //while we haven't finish to read the files into the directory we count the number of files
-            while ((directoryStruct = readdir(currentWorkingDirectory)) != NULL) {
-                #define filename directoryStruct->d_name
-                printf("%s\n", filename);
-                //it's ok to check only the first character
-                if (strcmp(filename, "token") == 0) {
-                    filetoken = fopen(filename, "r");
-                    if (filetoken != NULL) {
-                        //read the token from file
-                        if (fread(&token, sizeof(token), 1, filetoken) == 0) {
-                            //if an error occur (fread return value == 0)
-                            result = errno;
-                        }
-                        fclose(filetoken);
-                    }
-                }
+    FILE *filetoken;
+    if (access(TOKEN_FILE_NAME, F_OK)) {
+        filetoken = fopen(TOKEN_FILE_NAME, "r");
+        if (filetoken != NULL) {
+            //read the token from file
+            if (fread(&token, sizeof(token), 1, filetoken) == 0) {
+                //if an error occur (fread return value == 0)
+                result = 0;
             }
+            fclose(filetoken);
         }
     }
     return result;
@@ -98,12 +80,12 @@ int initializeToken(uint32_t *token) {
 int saveTokenToFile(uint32_t token) {
     int result = 1;
     FILE* filetoken;
-        if ((filetoken=fopen("token","w"))!=NULL) {
+        if ((filetoken=fopen(TOKEN_FILE_NAME,"w"))!=NULL) {
             if (fwrite(&token,sizeof(token),1,filetoken)==0) {
                     //if an error occur (fread return value == 0)
-                    result = errno;
+                    result = 0;
                 }
-            } else result = errno;
+            } else result = 0;
     return result;
 }
 
@@ -111,20 +93,24 @@ int sendPacket(SimpleProtocolPacket* packet) {
     int result=1;
     *packet = SPPTONTW(*packet);
     if (send(client_Socket,packet,sizeof(SimpleProtocolPacket),0)==-1) {
-        result = errno;
+        result = 0;
     }
     return result;
 }
 
-int waitSuccess() {
-    SimpleProtocolPacket  simpleProtocolPacket;
+int waitResponse(SimpleProtocolPacket *responsePacket) {
     int result=1;
-    if (recv(client_Socket,&simpleProtocolPacket,sizeof(SimpleProtocolPacket),0)!=-1) {
-        simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
-        if (GETSUC(simpleProtocolPacket) != 1) {
-            result = -8;
-        }
-    } else result = errno;
+    if (recv(client_Socket,responsePacket,sizeof(SimpleProtocolPacket),0)!=-1) {
+        *responsePacket = SPPTOHST(*responsePacket);
+    } else result = 0;
+    return result;
+}
+
+int checkSuccess(SimpleProtocolPacket *responsePacket) {
+    int result=1;
+    if (waitResponse(responsePacket)) {
+        if (!GETSUC(*responsePacket)) result=0;
+    }
     return result;
 }
 
@@ -148,14 +134,19 @@ int establishSession(int *clientSocket) {
             //check if an existing token file is present. If present load it
             if ((result=initializeToken(&token))) {
                 //sent Syn packet
-                SimpleProtocolPacket simpleProtocolPacket;
-                SPPINIT(simpleProtocolPacket);
-                SETSYN(simpleProtocolPacket);
-                SETTKN(simpleProtocolPacket, token);
-                if ((result=sendPacket(&simpleProtocolPacket))) {
-                    result = waitSuccess();
+                SimpleProtocolPacket packet;
+                SPPINIT(packet);
+                SETSYN(packet);
+                SETTKN(packet, token);
+                if ((result=sendPacket(&packet))) {
+                    //reuse sending packet for response
+                    SPPINIT(packet);
+                    if ((result = checkSuccess(&packet))) {
+                        if (token==0) {
+                            result = saveTokenToFile((uint32_t )GETTKN(packet));
+                        }
+                    }
                 }
-                //TODO if token was zero save it to file
             }
         }
     }
@@ -167,13 +158,14 @@ int set(uint32_t name, uint32_t value) {
     //TODO check error checking
     if ((result=establishSession(&client_Socket))){
         //send set packet
-        SimpleProtocolPacket simpleProtocolPacket;
-        SPPINIT(simpleProtocolPacket);
-        SETSET(simpleProtocolPacket);
-        SETVAR(simpleProtocolPacket,name);
-        SETVAL(simpleProtocolPacket,value);
-        if ((result=sendPacket(&simpleProtocolPacket)))
-            result=waitSuccess();
+        SimpleProtocolPacket packet;
+        SPPINIT(packet);
+        SETSET(packet);
+        SETVAR(packet,name);
+        SETVAL(packet,value);
+        if ((result=sendPacket(&packet)))
+            //reuse packet for response
+            result= checkSuccess(&packet);
     };
     return result;
 }
@@ -182,13 +174,14 @@ int increment(uint32_t name, uint32_t value) {
     int result=1;
     if ((result=establishSession(&client_Socket))){
         //send increment packet
-        SimpleProtocolPacket simpleProtocolPacket;
-        SPPINIT(simpleProtocolPacket);
-        SETINC(simpleProtocolPacket);
-        SETVAR(simpleProtocolPacket,name);
-        SETVAL(simpleProtocolPacket,value);
-        if ((result=sendPacket(&simpleProtocolPacket)))
-            result=waitSuccess();
+        SimpleProtocolPacket packet;
+        SPPINIT(packet);
+        SETINC(packet);
+        SETVAR(packet,name);
+        SETVAL(packet,value);
+        if ((result=sendPacket(&packet)))
+            //reuse packet for response
+            result= checkSuccess(&packet);
     };
     return result;
 }
@@ -196,18 +189,16 @@ int increment(uint32_t name, uint32_t value) {
 int get(uint32_t name,uint32_t* value) {
     int result = 1;
     if ((result=establishSession(&client_Socket))){
-        SimpleProtocolPacket simpleProtocolPacket;
-        SPPINIT(simpleProtocolPacket);
-        SETGET(simpleProtocolPacket);
-        SETVAR(simpleProtocolPacket,name);
-        if ((result=sendPacket(&simpleProtocolPacket))) {
+        SimpleProtocolPacket packet;
+        SPPINIT(packet);
+        SETGET(packet);
+        SETVAR(packet,name);
+        if ((result=sendPacket(&packet))) {
             //reuse packet for response
-            if (recv(client_Socket, &simpleProtocolPacket, sizeof(SimpleProtocolPacket), 0)!=-1) {
-                simpleProtocolPacket = SPPTOHST(simpleProtocolPacket);
-                if (GETSUC(simpleProtocolPacket) != 1) {
-                    result = -8;
-                } else *value = (uint32_t) GETVAL(simpleProtocolPacket);
-            } else result = errno;
+            if ((result=checkSuccess(&packet))) {
+                if (GETSUC(packet)) *value = (uint32_t) GETVAL(packet);
+                else result=0;
+            };
         }
     };
     return result;
