@@ -23,7 +23,9 @@
 
 int main(int argc, char **argv)
 {
+    //declare a variable for user selection in menu
     unsigned int response;
+    //print menu until option 4 is chosen
     do {
         printf("Choose an option\n");
         printf("1-Set a new variable\n");
@@ -32,36 +34,50 @@ int main(int argc, char **argv)
         printf("4-Program exit\n");
         scanf("%u", &response);
         switch (response) {
-            case 1: {
+            case 1: { //brackets are for adding a scope
                 uint32_t name, value;
                 printf("Insert the name of the new variable\n");
+                //read unsigned int variable name
                 scanf("%u", &name);
                 printf("Insert the value of the new variable\n");
+                //read unsigned int variable value
                 scanf("%u", &value);
+                //execute the set operation
                 if (!set(name, value)) {
+                    //if an error occurred
                     printf("Error\n");
                 }
                 break;
             }
-            case 2: {
+            case 2: { //brackets are for adding a scope
                 uint32_t name,value;
                 printf("Insert the name of the variable to increase\n");
+                //read unsigned int variable name
                 scanf("%u", &name);
                 printf("Insert how much to increase\n");
+                //read unsigned int for increase value
                 scanf("%u", &value);
+                //execute the increment operation
                 if (!increment(name,value)) {
+                    //if an error occurred
                     printf("Error\n");
                 }
                 break;
             }
-            case 3: {
+            case 3: { //brackets are for adding a scope
                 uint32_t name,value;
                 printf("Insert the name of the variable\n");
+                //read unsigned int variable name
                 scanf("%u", &name);
+                //execute get operation
                 if (!get(name,&value)) {
+                    //if an error occurred
                     printf("Error\n");
                 } else printf("The value of the variable %u is %u\n",name,value);
             }
+                break;
+            default:
+                printf("Undefined operation \n");
         }
     }while (response!=4);
     return 0;

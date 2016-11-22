@@ -30,9 +30,7 @@
 #define ADDRESS "127.0.0.1"
 #define TOKEN_FILE_NAME "token"
 
-int client_Socket; //this is global for a reason
-struct sockaddr_in serverAddress;
-uint32_t token;
+int client_Socket; //this is global for a reason. It is the shared socket for all the RPC calls.
 
 int socketConnected(int *clientSocket);
 int initializeToken(uint32_t *token);
@@ -43,92 +41,147 @@ int checkSuccess(SimpleProtocolPacket *responsePacket);
 int establishSession(int *clientSocket);
 
 int set(uint32_t name, uint32_t value) {
-    int result;
-    if ((result=establishSession(&client_Socket))){
-        //send set packet
+    //declare a variable for keeping correctness status of program
+    int shouldContinue;
+    //check if a socket is connected, connect if not. Check if a token file is present. Make syn call.
+    if ((shouldContinue=establishSession(&client_Socket))){
+        //if no errors occurred establishing the session
+        //create a packet
         SimpleProtocolPacket packet;
+        //initialize the packet
         SPPINIT(packet);
+        //set the packet to a "SET" packet
         SETSET(packet);
+        //insert the variable name into the packet
         SETVAR(packet,name);
+        //insert the variable value into the packet
         SETVAL(packet,value);
-        if ((result=sendPacket(&packet)))
-            //reuse packet for response
-            result= checkSuccess(&packet);
-    };
-    return result;
+        //send the packet
+        if ((shouldContinue=sendPacket(&packet)))
+            //If errors have not occurred
+            //reuse request packet for response. Wait response and check that it's a "SUCCESS" packet.
+            shouldContinue=checkSuccess(&packet);
+    }
+    return shouldContinue;
 }
 
 int increment(uint32_t name, uint32_t value) {
-    int result;
-    if ((result=establishSession(&client_Socket))){
+    //declare a variable for keeping correctness status of program
+    int shoulContinue;
+    //check if a socket is connected, connect if not. Check if a token file is present. Make syn call.
+    if ((shoulContinue=establishSession(&client_Socket))){
         //send increment packet
+        //create a packet
         SimpleProtocolPacket packet;
+        //initialize the packet
         SPPINIT(packet);
+        //set the packet to a "INC" packet
         SETINC(packet);
+        //insert the variable name into the packet
         SETVAR(packet,name);
+        //insert the variable value into the packet
         SETVAL(packet,value);
-        if ((result=sendPacket(&packet)))
-            //reuse packet for response
-            result= checkSuccess(&packet);
-    };
-    return result;
+        //send the packet
+        if ((shoulContinue=sendPacket(&packet)))
+            //If errors have not occurred
+            //reuse packet for response. Wait response and check that it's a "SUCCESS" packet.
+            shoulContinue= checkSuccess(&packet);
+    }
+    //return correctness indicator variable
+    return shoulContinue;
 }
 
 int get(uint32_t name,uint32_t* value) {
-    int result;
-    if ((result=establishSession(&client_Socket))){
+    //declare a variable for keeping correctness status of program
+    int shouldContinue;
+    //check if a socket is connected, connect if not. Check if a token file is present. Make syn call.
+    if ((shouldContinue=establishSession(&client_Socket))){
+        //send a get packet
+        //create a packet
         SimpleProtocolPacket packet;
+        //initialize the packet
         SPPINIT(packet);
+        //set the packet to a "GET" packet
         SETGET(packet);
+        //insert the variable name into the packet
         SETVAR(packet,name);
-        if ((result=sendPacket(&packet))) {
-            //reuse packet for response
-            if ((result=checkSuccess(&packet))) {
-                if (GETSUC(packet)) *value = (uint32_t) GETVAL(packet);
-                else result=0;
-            };
+        //send the packet
+        if ((shouldContinue=sendPacket(&packet))) {
+            //If errors have not occurred
+            //reuse packet for response. Wait response and check that it's a "SUCCESS" packet.
+            if ((shouldContinue=checkSuccess(&packet))) {
+                //if it is a "SUCCESS" packet get the value of the variable from it and return to the caller through pointer.
+                *value = (uint32_t) GETVAL(packet);
+            }
         }
-    };
-    return result;
+    }
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 int establishSession(int *clientSocket) {
-    int result = 1;
+    //declare a variable for keeping correctness status of program
+    int shouldContinue = 1;
     //check if an existing open connection not exist
     if (socketConnected(clientSocket)) {
+        //if it not exist create a client socket for IPV4 and TCP
         if ((*clientSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            result = -2;
+            //in case of error block the program
+            shouldContinue = 0;
         } else {
+            // if no errors occurred
+            //create a sockaddr_in struct for specifying the address of the server
+            struct sockaddr_in serverAddress;
+            //set all the struct to zero
             memset(&serverAddress, 0, sizeof(serverAddress));
+            //set the server internet family to IPV4
             serverAddress.sin_family = AF_INET;
+            //set the server port
             serverAddress.sin_port = htons(PORT);
+            //convert the address from dotted character representation to binary representation
             if (inet_pton(AF_INET, ADDRESS, &serverAddress.sin_addr) <= 0) {
-                result = -3;
-            } else if (connect(*clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
-                result = -5;
+                //in an error occur block the program
+                shouldContinue = 0;
+            }
+            //if the conversion is successful connect to the server
+            else if (connect(*clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
+                //in an error occur during connection to server block the program
+                shouldContinue = 0;
             }
         }
-        if (result == 1) {
-            //check if an existing token file is present. If present load it
-            if ((result=initializeToken(&token))) {
+        //if the program can continue
+        if (shouldContinue == 1) {
+            //declare a variable for storing the token
+            uint32_t token;
+            //check if an existing token file is present. If present load it. Default token is zero.
+            if ((shouldContinue=initializeToken(&token))) {
                 //sent Syn packet
+                //declare packet
                 SimpleProtocolPacket packet;
+                //initialize the packet
                 SPPINIT(packet);
+                //set the packet to be a "SYN" packet
                 SETSYN(packet);
+                //insert the token into file
                 SETTKN(packet, token);
-                if ((result=sendPacket(&packet))) {
-                    //reuse sending packet for response
-                    SPPINIT(packet);
-                    if ((result = checkSuccess(&packet))) {
+                //send packet
+                if ((shouldContinue=sendPacket(&packet))) {
+                    //If errors have not occurred
+                    //reuse packet for response. Wait response and check that it's a "SUCCESS" packet.
+                    if ((shouldContinue = checkSuccess(&packet))) {
+                        //if the packet is a success packet and the sent token was zero
                         if (token==0) {
-                            result = saveTokenToFile((uint32_t )GETTKN(packet));
+                            //this means that is a new session
+                            //save the token to a new file
+                            shouldContinue = saveTokenToFile((uint32_t )GETTKN(packet));
                         }
                     }
                 }
             }
         }
     }
-    return result;
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 int socketConnected(int *clientSocket) {
@@ -143,33 +196,40 @@ int socketConnected(int *clientSocket) {
 }
 
 int sendPacket(SimpleProtocolPacket* packet) {
-    int result=1;
+    //declare a variable for keeping correctness status of program
+    int shouldContinue=1;
     *packet = SPPTONTW(*packet);
     if (send(client_Socket,packet,sizeof(SimpleProtocolPacket),0)==-1) {
-        result = 0;
+        shouldContinue = 0;
     }
-    return result;
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 int waitResponse(SimpleProtocolPacket *responsePacket) {
-    int result=1;
+    //declare a variable for keeping correctness status of program
+    int shouldContinue=1;
     if (recv(client_Socket,responsePacket,sizeof(SimpleProtocolPacket),0)!=-1) {
         *responsePacket = SPPTOHST(*responsePacket);
-    } else result = 0;
-    return result;
+    } else shouldContinue = 0;
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 int checkSuccess(SimpleProtocolPacket *responsePacket) {
-    int result=1;
+    //declare a variable for keeping correctness status of program
+    int shouldContinue=1;
     if (waitResponse(responsePacket)) {
-        if (!GETSUC(*responsePacket)) result=0;
+        if (!GETSUC(*responsePacket)) shouldContinue=0;
     }
-    return result;
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 int initializeToken(uint32_t *token) {
     *token = 0;
-    int result = 1;
+    //declare a variable for keeping correctness status of program
+    int shouldContinue = 1;
     FILE* filetoken;
     if (access(TOKEN_FILE_NAME, F_OK)==0) {
         filetoken = fopen(TOKEN_FILE_NAME, "rb");
@@ -177,25 +237,28 @@ int initializeToken(uint32_t *token) {
             //read the token from file
             if (fread(token, sizeof(*token), 1, filetoken) == 0) {
                 //if an error occur (fread return value == 0)
-                result = 0;
+                shouldContinue = 0;
             }
             fclose(filetoken);
         }
     }
-    return result;
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 int saveTokenToFile(uint32_t token) {
-    int result = 1;
+    //declare a variable for keeping correctness status of program
+    int shouldContinue = 1;
     FILE* filetoken;
     if ((filetoken=fopen(TOKEN_FILE_NAME,"wb"))!=NULL) {
         if (fwrite(&token,sizeof(token),1,filetoken)==0) {
             //if an error occur (fwrite return value == 0)
-            result = 0;
+            shouldContinue = 0;
         }
         fclose(filetoken);
-    } else result = 0;
-    return result;
+    } else shouldContinue = 0;
+    //return correctness indicator variable
+    return shouldContinue;
 }
 
 /*int getMACaddress(uint8_t * MACaddress) {
