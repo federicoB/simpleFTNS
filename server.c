@@ -195,7 +195,7 @@ void* connectionHandler(void* socket){
                 //create the query that counts (check if the session exists)
                 snprintf(sql, 512,
                         "SELECT COUNT(*) FROM Sessions WHERE "
-                        "SESSID = %u;", token);
+                        "ID = %u;", token);
                 //execute the query
                 int rc = sqlite3_exec(db, sql, callbackOneInteger, &result, &errMsg);
                 //print debug info
