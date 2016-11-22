@@ -23,9 +23,8 @@ int main(int argc, char **argv)
 {
     set(12,1);
     increment(12,42);
-    uint32_t * value = malloc(sizeof(uint32_t));
-    get(12,value);
-    printf("%u",*value);
-    free(value);
+    uint32_t  value;
+    get(12,&value);
+    printf("%u",value);
     return 0;
 }

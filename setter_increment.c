@@ -65,18 +65,18 @@ int socketConnected(int *clientSocket) {
     //getting socket option of a not connected socket return -1
     int returnValue = getsockopt(*clientSocket, SOL_SOCKET, SO_ERROR, &error_code, &error_code_size);
     //1 if already connected 0 if not (!-1 is 0)
-    return !returnValue;
+    return (returnValue==-1);
 }
 
 int initializeToken(uint32_t *token) {
-    token = 0;
+    *token = 0;
     int result = 1;
-    FILE *filetoken;
-    if (access(TOKEN_FILE_NAME, F_OK)) {
+    FILE* filetoken;
+    if (access(TOKEN_FILE_NAME, F_OK)==0) {
         filetoken = fopen(TOKEN_FILE_NAME, "r");
         if (filetoken != NULL) {
             //read the token from file
-            if (fread(&token, sizeof(token), 1, filetoken) == 0) {
+            if (fread(token, sizeof(*token), 1, filetoken) == 0) {
                 //if an error occur (fread return value == 0)
                 result = 0;
             }
@@ -91,7 +91,7 @@ int saveTokenToFile(uint32_t token) {
     FILE* filetoken;
         if ((filetoken=fopen(TOKEN_FILE_NAME,"w"))!=NULL) {
             if (fwrite(&token,sizeof(token),1,filetoken)==0) {
-                    //if an error occur (fread return value == 0)
+                    //if an error occur (fwrite return value == 0)
                     result = 0;
                 }
             } else result = 0;
