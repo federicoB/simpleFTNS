@@ -481,6 +481,8 @@ int callbackOneInteger(void* intPointer, int argc, char** argv, char** colNames)
     int* integer = (int*) intPointer;
     //convert to int and save
     *integer = atoi(argv[0]);
+    //return ok
+    return 0;
 }
 
 /**
@@ -496,6 +498,8 @@ int callbackOne32UInteger(void* intPointer, int argc, char** argv, char** colNam
     uint32_t* integer = (uint32_t*) intPointer;
     //convert to unsigned int 32 and save
     *integer = (uint32_t) strtoul(argv[0], NULL, 10);
+    //return ok
+    return 0;
 }
 
 /**
