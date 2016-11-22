@@ -95,7 +95,7 @@ int get(uint32_t name,uint32_t* value) {
 int establishSession(int *clientSocket) {
     int result = 1;
     //check if an existing open connection not exist
-    if (socketConnected(clientSocket) != 0) {
+    if (socketConnected(clientSocket)) {
         if ((*clientSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             result = -2;
         } else {
@@ -172,7 +172,7 @@ int initializeToken(uint32_t *token) {
     int result = 1;
     FILE* filetoken;
     if (access(TOKEN_FILE_NAME, F_OK)==0) {
-        filetoken = fopen(TOKEN_FILE_NAME, "r");
+        filetoken = fopen(TOKEN_FILE_NAME, "rb");
         if (filetoken != NULL) {
             //read the token from file
             if (fread(token, sizeof(*token), 1, filetoken) == 0) {
@@ -188,11 +188,12 @@ int initializeToken(uint32_t *token) {
 int saveTokenToFile(uint32_t token) {
     int result = 1;
     FILE* filetoken;
-    if ((filetoken=fopen(TOKEN_FILE_NAME,"w"))!=NULL) {
+    if ((filetoken=fopen(TOKEN_FILE_NAME,"wb"))!=NULL) {
         if (fwrite(&token,sizeof(token),1,filetoken)==0) {
             //if an error occur (fwrite return value == 0)
             result = 0;
         }
+        fclose(filetoken);
     } else result = 0;
     return result;
 }
