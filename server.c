@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     //if the socket is < 1 (error)
     if (socketd < 0){
         //print an error
-        printf("error opening socket\n");
+        printf("Error opening socket\n");
         //exit
         exit(1);
     }
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     //try to bind and if fail (result < 0)
     if (bind(socketd, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
         //print an error
-        printf("error on binding");
+        printf("Error on binding\n");
         //exit
         exit(1);
     }
@@ -84,14 +84,16 @@ int main(int argc, char** argv) {
     listen(socketd, MAXCONN);
     //the client file descriptor
     int client = -1;
+    //print debug info
+    printf("Listening for connections\n");
     //while no error is signaled, accept connections
     while (client = accept(socketd, (struct sockaddr *) NULL, NULL)){
         //print message
-        printf("connection estabilished\n");
+        printf("Connection estabilished\n");
         //create a thread which calls the connection handler. if fails
         if(pthread_create(&thread, NULL,  connectionHandler, (void*) &client) < 0){
             //print an error
-            printf("error creating thread\n");
+            printf("Error creating thread\n");
             //exit
             exit(1);
         }
@@ -170,14 +172,14 @@ void* connectionHandler(void* socket){
                     sqlite3_exec(db, sql, callbackOne32UInteger, &token, &errMsg);
                     //leave the should continue as true
                     //print debug info
-                    printf("new session created with id:%u", token);
+                    printf("New session created with id:%u\n", token);
                 }
                 //else (error)
                 else{
                     //set should continue as false
                     shouldContinue = 0;
                     //print an error
-                    printf("error while inserting new session\n");
+                    printf("Error while inserting new session\n");
                     //set the response as err
                     SETERR(outPacket);
                     //TODO: implement error code (Internal server error)
@@ -207,7 +209,7 @@ void* connectionHandler(void* socket){
                         //set should continue as false
                         shouldContinue = 0;
                         //print an error
-                        printf("error: invalid session id received\n");
+                        printf("Error: invalid session id received\n");
                         //set the response as err
                         SETERR(outPacket);
                         //TODO: implement error code
@@ -219,7 +221,7 @@ void* connectionHandler(void* socket){
                     else{
                         //leave the should continue as true
                         //print debug info
-                        printf("session restored. id:%u\n", token);
+                        printf("Session restored with id:%u\n", token);
                     }
                 }
                 //else (error)
@@ -227,7 +229,7 @@ void* connectionHandler(void* socket){
                     //set should continue as false
                     shouldContinue = 0;
                     //print an error
-                    printf("error restoring session %u\n", token);
+                    printf("Error restoring session %u\n", token);
                     //set the response as err
                     SETERR(outPacket);
                     //TODO: implement error code (Internal server error)
@@ -262,7 +264,7 @@ void* connectionHandler(void* socket){
                     //if is a set packet
                     if(GETSET(inPacket)){
                         //print debug info
-                        printf("SET invoked from session %u", token);
+                        printf("SET invoked from session %u\n", token);
                         //the var name (actually only 25bits)
                         uint32_t varName = 0;
                         //the var value
@@ -299,13 +301,13 @@ void* connectionHandler(void* socket){
                             //TODO: implement error code (Internal server error)
                             //SETERC(...)
                             //print debug info
-                            printf("error in SET invoked from session %u (query failed)", token);
+                            printf("Error in SET invoked from session %u (query failed)\n", token);
                         }
                     }
                     //else if is a inc packet
                     else if (GETINC(inPacket)) {
                         //print debug info
-                        printf("INC invoked from session %u", token);
+                        printf("INC invoked from session %u\n", token);
                         //the var name (actually only 25bits)
                         uint32_t varName = 0;
                         //the var value
@@ -346,7 +348,7 @@ void* connectionHandler(void* socket){
                             //else (internal server error because the query should never fail)
                             else{
                                 //print debug info
-                                printf("error while incrementing var %u in session %u (query failed)\n", varName, token);
+                                printf("Error while incrementing var %u in session %u (query failed)\n", varName, token);
                                 //set the response as err
                                 SETERR(outPacket);
                                 //TODO: implement error code (Internal server error)
@@ -356,7 +358,7 @@ void* connectionHandler(void* socket){
                         //else
                         else{
                             //print debug info
-                            printf("error while incrementing var %u in session %u (var not found)\n", varName, token);
+                            printf("Error while incrementing var %u in session %u (var not found)\n", varName, token);
                             //set the response as err
                             SETERR(outPacket);
                             //TODO: implement error code
@@ -366,7 +368,7 @@ void* connectionHandler(void* socket){
                     //else if is a GET packet
                     else if (GETGET(inPacket)) {
                         //print debug info
-                        printf("GET invoked from session %u", token);
+                        printf("GET invoked from session %u\n", token);
                         //the var name (actually only 25bits)
                         uint32_t varName = 0;
                         //the var value
@@ -391,7 +393,7 @@ void* connectionHandler(void* socket){
                             //if query worked
                             if(rc == SQLITE_OK){
                                 //print debug info
-                                printf("var %u got from session %u (value: %u)\n", varName, token, varValue);
+                                printf("Var %u got from session %u (value: %u)\n", varName, token, varValue);
                                 //set the name to outbound packet
                                 SETVAR(outPacket, varName);
                                 //set the new value to outbound packet
@@ -402,7 +404,7 @@ void* connectionHandler(void* socket){
                             //else (internal server error because the query should never fail)
                             else{
                                 //print debug info
-                                printf("error while getting var %u for session %u (query failed)\n", varName, token);
+                                printf("Error while getting var %u for session %u (query failed)\n", varName, token);
                                 //set the response as err
                                 SETERR(outPacket);
                                 //TODO: implement error code (Internal server error)
@@ -412,7 +414,7 @@ void* connectionHandler(void* socket){
                         //else
                         else{
                             //print debug info
-                            printf("error while incrementing var %u in session %u (var not found)\n", varName, token);
+                            printf("Error while incrementing var %u in session %u (var not found)\n", varName, token);
                             //set the response as err
                             SETERR(outPacket);
                             //TODO: implement error code
@@ -422,7 +424,7 @@ void* connectionHandler(void* socket){
                     //else if is a FIN packet
                     else if(GETFIN(inPacket)){
                         //print debug info
-                        printf("FIN invoked from session %u", token);
+                        printf("FIN invoked from session %u\n", token);
                         //set should run as false
                         shouldRun = 0;
                         //set should send
@@ -465,7 +467,7 @@ void* connectionHandler(void* socket){
     sqlite3_close(db);
     //auto close thread
     //print debug info
-    printf("connection to client closed (session %u)\n", token);
+    printf("Connection to client closed (session %u)\n", token);
 }
 
 /**
