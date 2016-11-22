@@ -23,8 +23,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
-#include <errno.h>
 #include <unistd.h>
 #include "simpleProtocol.h"
 
@@ -39,7 +37,7 @@ uint32_t token;
 int socketConnected(int *clientSocket);
 int initializeToken(uint32_t *token);
 int saveTokenToFile(uint32_t token);
-int sendPacket(SimpleProtocolPacket* packet;
+int sendPacket(SimpleProtocolPacket* packet);
 int waitResponse(SimpleProtocolPacket *responsePacket);
 int checkSuccess(SimpleProtocolPacket *responsePacket);
 int establishSession(int *clientSocket);

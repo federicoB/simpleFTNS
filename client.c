@@ -21,8 +21,6 @@
 #include <string.h>
 #include "setter_increment.h"
 
-void printerror();
-
 int main(int argc, char **argv)
 {
     unsigned int response;
@@ -41,7 +39,7 @@ int main(int argc, char **argv)
                 printf("Insert the value of the new variable\n");
                 scanf("%u", &value);
                 if (!set(name, value)) {
-                    printerror();
+                    printf("Error\n");
                 }
                 break;
             }
@@ -52,7 +50,7 @@ int main(int argc, char **argv)
                 printf("Insert how much to increase\n");
                 scanf("%u", &value);
                 if (!increment(name,value)) {
-                    printerror();
+                    printf("Error\n");
                 }
                 break;
             }
@@ -61,15 +59,10 @@ int main(int argc, char **argv)
                 printf("Insert the name of the variable\n");
                 scanf("%u", &name);
                 if (!get(name,&value)) {
-                    printerror();
-                }
-                printf("The value of the variable %u is %u\n",name,value);
+                    printf("Error\n");
+                } else printf("The value of the variable %u is %u\n",name,value);
             }
         }
     }while (response!=4);
     return 0;
-}
-
-void printerror() {
-    printf("Insert the name of the variable\n");
 }
