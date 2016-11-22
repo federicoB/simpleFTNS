@@ -17,7 +17,11 @@
 */
 
 #include <malloc.h>
+#include <errno.h>
+#include <string.h>
 #include "setter_increment.h"
+
+void printerror();
 
 int main(int argc, char **argv)
 {
@@ -36,7 +40,9 @@ int main(int argc, char **argv)
                 scanf("%u", &name);
                 printf("Insert the value of the new variable\n");
                 scanf("%u", &value);
-                set(name, value);
+                if (!set(name, value)) {
+                    printerror();
+                }
                 break;
             }
             case 2: {
@@ -45,17 +51,25 @@ int main(int argc, char **argv)
                 scanf("%u", &name);
                 printf("Insert how much to increase\n");
                 scanf("%u", &value);
-                increment(name,value);
+                if (!increment(name,value)) {
+                    printerror();
+                }
                 break;
             }
             case 3: {
                 uint32_t name,value;
                 printf("Insert the name of the variable\n");
                 scanf("%u", &name);
-                get(name,&value);
+                if (!get(name,&value)) {
+                    printerror();
+                }
                 printf("The value of the variable %u is %u\n",name,value);
             }
         }
     }while (response!=4);
     return 0;
+}
+
+void printerror() {
+    printf("Insert the name of the variable\n");
 }
