@@ -16,11 +16,16 @@
 *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <malloc.h>
 #include "setter_increment.h"
 
 int main(int argc, char **argv)
 {
-    set(12,12);
-    set(15,15);
+    set(12,1);
+    increment(12,42);
+    uint32_t * value = malloc(sizeof(uint32_t));
+    get(12,value);
+    printf("%u",*value);
+    free(value);
     return 0;
 }
