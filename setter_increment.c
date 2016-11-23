@@ -67,9 +67,9 @@ int set(uint32_t name, uint32_t value) {
 
 int increment(uint32_t name, uint32_t value) {
     //declare a variable for keeping correctness status of program
-    int shoulContinue;
+    int shouldContinue;
     //check if a socket is connected, connect if not. Check if a token file is present. Make syn call.
-    if ((shoulContinue=establishSession(&client_Socket))){
+    if ((shouldContinue=establishSession(&client_Socket))){
         //send increment packet
         //create a packet
         SimpleProtocolPacket packet;
@@ -82,13 +82,13 @@ int increment(uint32_t name, uint32_t value) {
         //insert the variable value into the packet
         SETVAL(packet,value);
         //send the packet
-        if ((shoulContinue=sendPacket(&packet)))
+        if ((shouldContinue=sendPacket(&packet)))
             //If errors have not occurred
             //reuse packet for response. Wait response and check that it's a "SUCCESS" packet.
-            shoulContinue= checkSuccess(&packet);
+            shouldContinue= checkSuccess(&packet);
     }
     //return correctness indicator variable
-    return shoulContinue;
+    return shouldContinue;
 }
 
 int get(uint32_t name,uint32_t* value) {
@@ -119,6 +119,12 @@ int get(uint32_t name,uint32_t* value) {
     return shouldContinue;
 }
 
+/**
+ * Eastabilish a new session with the server. Check if exist a socket already connected.
+ * If there isn't any socket already connected create a new connection and send sync packet.
+ * @param clientSocket int*: the socket to check if it's connected of not
+ * @return 0 if case of error 1 otherwise
+ */
 int establishSession(int *clientSocket) {
     //declare a variable for keeping correctness status of program
     int shouldContinue = 1;
@@ -166,7 +172,7 @@ int establishSession(int *clientSocket) {
                 SETTKN(packet, token);
                 //send packet
                 if ((shouldContinue=sendPacket(&packet))) {
-                    //If errors have not occurred
+                    //if errors have not occurred
                     //reuse packet for response. Wait response and check that it's a "SUCCESS" packet.
                     if ((shouldContinue = checkSuccess(&packet))) {
                         //if the packet is a success packet and the sent token was zero
@@ -184,6 +190,11 @@ int establishSession(int *clientSocket) {
     return shouldContinue;
 }
 
+/**
+ * Check if a socket is connected or not.
+ * @param clientSocket int*: the socket to check
+ * @return 1 if not connected 0 otherwise
+ */
 int socketConnected(int *clientSocket) {
     //declare a variable for keeping getSockOpt error
     int error_code = 0;
@@ -195,68 +206,114 @@ int socketConnected(int *clientSocket) {
     return (returnValue==-1);
 }
 
+/**
+ * Send a packet to the server.
+ * @param packet SimpleProtocolPacket*: the packet to send
+ * @return 0 in case of errors 1 otherwise
+ */
 int sendPacket(SimpleProtocolPacket* packet) {
     //declare a variable for keeping correctness status of program
     int shouldContinue=1;
+    //transform to network format (big-endian)
     *packet = SPPTONTW(*packet);
+    //send the packet
     if (send(client_Socket,packet,sizeof(SimpleProtocolPacket),0)==-1) {
+        //in case of error block the program
         shouldContinue = 0;
     }
     //return correctness indicator variable
     return shouldContinue;
 }
 
+/**
+ * Wait a response packet to the server
+ * @param responsePacket SimpleProtocolPacket*: a buffer where the response packet will be written
+ * @return 0 in case of errors 1 otherwise
+ */
 int waitResponse(SimpleProtocolPacket *responsePacket) {
     //declare a variable for keeping correctness status of program
     int shouldContinue=1;
+    //wait for response packet
     if (recv(client_Socket,responsePacket,sizeof(SimpleProtocolPacket),0)!=-1) {
+        //if the recv is successful
+        //convert the packet to host endianess
         *responsePacket = SPPTOHST(*responsePacket);
-    } else shouldContinue = 0;
+    }
+    //or if some error has occurred block the program
+    else shouldContinue = 0;
     //return correctness indicator variable
     return shouldContinue;
 }
 
+/**
+ * Check if a response packet is a "SUCCESS" packet
+ * @param responsePacket SimpleProtocolPacket*: the packet to check
+ * @return 0 in case of errors 1 otherwise
+ */
 int checkSuccess(SimpleProtocolPacket *responsePacket) {
     //declare a variable for keeping correctness status of program
     int shouldContinue=1;
+    //wait for a response packet
     if (waitResponse(responsePacket)) {
+        //if we receive a packet
+        //check that is a successful packet. If it's not block the program
         if (!GETSUC(*responsePacket)) shouldContinue=0;
     }
     //return correctness indicator variable
     return shouldContinue;
 }
 
+/**
+ * Check if there is a token file. If it exist load the token from it, otherwise set the token to zero.
+ * @param token uint32_t*: the token to set.
+ * @return 0 in case of errors 1 otherwise
+ */
 int initializeToken(uint32_t *token) {
+    //default token value is zero (request to the server a new token)
     *token = 0;
     //declare a variable for keeping correctness status of program
     int shouldContinue = 1;
-    FILE* filetoken;
+    //declare a pointer to a FILE struct
+    FILE* fileToken;
+    //if the file exist and the program has the permission to access it
     if (access(TOKEN_FILE_NAME, F_OK)==0) {
-        filetoken = fopen(TOKEN_FILE_NAME, "rb");
-        if (filetoken != NULL) {
+        //open the file in reading binary mode
+        fileToken = fopen(TOKEN_FILE_NAME, "rb");
+        //if the operation of opening the file is successful
+        if (fileToken != NULL) {
             //read the token from file
-            if (fread(token, sizeof(*token), 1, filetoken) == 0) {
-                //if an error occur (fread return value == 0)
+            if (fread(token, sizeof(*token), 1, fileToken) == 0) {
+                //if an error occur block the program
                 shouldContinue = 0;
             }
-            fclose(filetoken);
-        }
+            //close the file
+            fclose(fileToken);
+        } else shouldContinue = 0;
     }
     //return correctness indicator variable
     return shouldContinue;
 }
 
+/**
+ * Save a given token to a file. The file fill be in cwd.
+ * @param token uint32_t: the token to save.
+ * @return 0 in case of errors 1 otherwise.
+ */
 int saveTokenToFile(uint32_t token) {
     //declare a variable for keeping correctness status of program
     int shouldContinue = 1;
+    //declare a pointer to a FILE struct
     FILE* filetoken;
+    //open the file in writing binary mode
     if ((filetoken=fopen(TOKEN_FILE_NAME,"wb"))!=NULL) {
+        //if the operation of opening the file is successful
+        //write the token to file
         if (fwrite(&token,sizeof(token),1,filetoken)==0) {
-            //if an error occur (fwrite return value == 0)
+            //if an error occur block the program
             shouldContinue = 0;
         }
         fclose(filetoken);
-    } else shouldContinue = 0;
+    } else shouldContinue = 0;   //if we can't open the file block the program
     //return correctness indicator variable
     return shouldContinue;
 }
