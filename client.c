@@ -78,6 +78,7 @@ int main(int argc, char **argv)
                 break;
             case 4: {
                 printf("Closing demo client\n");
+                break;
             }
             default:
                 printf("Undefined operation \n");

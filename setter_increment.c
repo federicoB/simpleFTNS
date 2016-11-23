@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include "simpleProtocol.h"
 
-#define PORT 1088
+#define PORT 60010
 #define ADDRESS "127.0.0.1"
 #define TOKEN_FILE_NAME "token"
 
