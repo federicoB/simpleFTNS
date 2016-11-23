@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     unsigned int response;
     //print menu until option 4 is chosen
     do {
-        printf("Choose an option\n");
+        printf("\n Choose an option\n");
         printf("1-Set a new variable\n");
         printf("2-Increase current variable\n");
         printf("3-Get the value of a variable\n");
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
                 printf("Insert the name of the variable to increase\n");
                 //read unsigned int variable name
                 scanf("%u", &name);
-                printf("Insert how much to increase\n");
+                printf("Insert the amount to add\n");
                 //read unsigned int for increase value
                 scanf("%u", &value);
                 //execute the increment operation
