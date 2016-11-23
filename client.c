@@ -76,6 +76,9 @@ int main(int argc, char **argv)
                 } else printf("The value of the variable %u is %u\n",name,value);
             }
                 break;
+            case 4: {
+                printf("Closing demo client\n");
+            }
             default:
                 printf("Undefined operation \n");
         }
