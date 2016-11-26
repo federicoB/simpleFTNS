@@ -201,7 +201,7 @@ void* connectionHandler(void* socket){
                 //execute the query
                 int rc = sqlite3_exec(db, sql, callbackOneInteger, &result, &errMsg);
                 //print debug info
-                printf("EXECUTED SQL: %s\n", sql);
+//                printf("EXECUTED SQL: %s\n", sql);
                 //if the query has bee successful
                 if(rc == SQLITE_OK){
                     //if not exists
@@ -282,7 +282,7 @@ void* connectionHandler(void* socket){
                         //execute the query
                         int rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
                         //print debug info
-                        printf("EXECUTED SQL: %s\n", sql);
+//                        printf("EXECUTED SQL: %s\n", sql);
                         //if query worked
                         if(rc == SQLITE_OK){
                             //set the name to outbound packet
@@ -333,7 +333,7 @@ void* connectionHandler(void* socket){
                             //execute the query
                             int rc = sqlite3_exec(db, sql, callbackOne32UInteger, &varValue, &errMsg);
                             //print debug info
-                            printf("EXECUTED SQL: %s\n", sql);
+//                            printf("EXECUTED SQL: %s\n", sql);
                             //if query worked
                             if(rc == SQLITE_OK){
                                 //set the name to outbound packet
@@ -389,7 +389,7 @@ void* connectionHandler(void* socket){
                             //execute the query
                             int rc = sqlite3_exec(db, sql, callbackOneInteger, &varValue, &errMsg);
                             //print debug info
-                            printf("EXECUTED SQL: %s\n", sql);
+//                            printf("EXECUTED SQL: %s\n", sql);
                             //if query worked
                             if(rc == SQLITE_OK){
                                 //print debug info
@@ -467,7 +467,7 @@ void* connectionHandler(void* socket){
     sqlite3_close(db);
     //auto close thread
     //print debug info
-    printf("Connection to client closed (session %u)\n", token);
+    printf("Connection to client closed\n");
 }
 
 /**
@@ -525,7 +525,7 @@ int countVar(sqlite3* db, uint32_t token, uint32_t varName, char** errMsg){
     //execute the query
     sqlite3_exec(db, sql, callbackOneInteger, &result, errMsg);
     //print debug info
-    printf("EXECUTED SQL: %s\n", sql);
+//    printf("EXECUTED SQL: %s\n", sql);
     //return the result
     return result;
 }
