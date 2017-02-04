@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -89,7 +88,7 @@ int main(int argc, char** argv) {
     //while no error is signaled, accept connections
     while (client = accept(socketd, (struct sockaddr *) NULL, NULL)){
         //print message
-        printf("Connection estabilished\n");
+        printf("Connection established\n");
         //create a thread which calls the connection handler. if fails
         if(pthread_create(&thread, NULL,  connectionHandler, (void*) &client) < 0){
             //print an error
@@ -165,9 +164,9 @@ void* connectionHandler(void* socket){
                 int rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
                 //if the query has bee successful
                 if(rc == SQLITE_OK){
-                    //since Sessions has an int, pk, ai column, it acually is an alias for rowid
+                    //since Sessions has an int, pk, ai column, it actually is an alias for rowid
                     snprintf(sql, 512, "SELECT last_insert_rowid();");
-                    //execute the query with the callback wich saves the last token
+                    //execute the query with the callback which saves the last token
                     //ignore the rc. TODO: improve errore handling structure
                     sqlite3_exec(db, sql, callbackOne32UInteger, &token, &errMsg);
                     //leave the should continue as true

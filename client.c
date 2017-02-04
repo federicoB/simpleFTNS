@@ -17,8 +17,6 @@
 */
 
 #include <malloc.h>
-#include <errno.h>
-#include <string.h>
 #include "setter_increment.h"
 
 int main(int argc, char **argv)
