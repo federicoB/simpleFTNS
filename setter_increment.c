@@ -333,9 +333,3 @@ int saveTokenToFile(uint32_t token) {
     }
     return status;
 }*/
-
-/**
- * Check if a given socket is already connected to a server or not.
- * @param clientSocket int*: the socket descriptor to check
- * @return 1 if already connected 0 if not
- */
