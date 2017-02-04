@@ -1,8 +1,8 @@
 /*
 * Created by Federico Bertani on 16/11/16.
 * Copyright (c) 2016 Federico Bertani, Riccardo Maffei
-* This file is part of RestorableTCP.
-* FaultTolerantClientServer is free software: you can redistribute it and/or modify
+* This file is part of simpleFTNS.
+* simpleFTNS is free software: you can redistribute it and/or modify
 *    it under the terms of the GNU Affero General Public License as published by
 *    the Free Software Foundation, either version 3 of the License, or
 *    (at your option) any later version.
