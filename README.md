@@ -1,4 +1,4 @@
-#Simple Fault Tolerant Network System
+# Simple Fault Tolerant Network System
 
 This is a project started for the Computer Networking curse.
 
@@ -6,7 +6,7 @@ The aim is to create a client-server system that is fault tolerant, that means g
 
 In this particular case the goal of the system is to offer a service for storing key-value pairs.
 
-###How fault tolerance is obtained
+### How fault tolerance is obtained
 Briefly:
 * The server crashes are covered by storing the key-value pairs in a database.
 * The client crashes are covered by saving a token file locally and the client can after restore sessions.
@@ -21,7 +21,7 @@ If the client crashes, at restart it can restore a previous session:
 
 ![Restore session image](http://i.imgur.com/IQfKbfZ.png "Restore session")
 
-#Installation
+# Installation
 1. Download or clone the git repository
 2. SQLite3 is required for compiling the project. If you don't have it installed in your system (also the dev package), install with:
 
@@ -56,7 +56,7 @@ If the client crashes, at restart it can restore a previous session:
     ```
 6. Start server and then client. Server use port 60010 and client connects to localhost.
 
-##License
+## License
 This software is released under the GNU AFFERO GPL license.
 
 A copy of the license is provided in the LICENSE file.
